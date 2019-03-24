@@ -8,106 +8,89 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Connector;
+using AdaptiveCards;
+
 namespace QnABot.Dialogs
 {
     [Serializable]
     public class RatingDialog:IDialog<object>
     {
-        //Rating
-        private const string fiverate = "★★★★★";
-        private const string fourrate = "★★★★";
-        private const string threerate = "★★★";
-        private const string tworate = "★★";
-        private const string Onerate = "★";
+
 
         public async Task StartAsync(IDialogContext context)
         {
-            // PromptDialog.Choice(context, this.AfterSelectOption, new string[] { "★★★★★", "★★★★" }, "Hello, you're in the survey dialog. Please pick one of these options");
-          // PromptDialog.Choice(context, this.AfterSelectOption, new string[] { "★★★★★", "★★★★" }, " ", "Not a valid option", 3, PromptStyle.Keyboard);
-           PromptDialog.Choice(context, this.OnOptionRating, new List<string>() { fiverate, fourrate, threerate, tworate, Onerate }, " ", " ", 1, PromptStyle.Keyboard);
-            // context.Done(String.Empty);
-            //context.Wait(this.MessageReceivedAsync);
-            //this.ShowOptions(context);
+
+
+            //  PromptDialog.Choice(context, MenuChoiceReceivedasync, new List<string>() { "★★★★★", "★★★★", "★★★", "★★", "★" }, " ", " ", 1);
+
+            Activity replyToConversation = (Activity)context.MakeMessage();
+            replyToConversation.Attachments = new List<Attachment>();
+            AdaptiveCard card = new AdaptiveCard();
+
+            card.Body.Add(new TextBlock()
+            {
+                Text = "Rate the AuditBot",
+                Size = TextSize.Large,
+                Weight = TextWeight.Bolder
+            });
+
+            //Action
+            card.Actions.Add(new SubmitAction()
+            {
+                Title= "★★★★★",
+                Data= "You had rate ★★★★★ "
+            });
+            card.Actions.Add(new SubmitAction()
+            {
+                Title = "★★★★",
+                Data = "You had rate ★★★★"
+            });
+            card.Actions.Add(new SubmitAction()
+            {
+                Title = "★★★",
+                Data = "You had rate ★★★"
+            });
+            card.Actions.Add(new SubmitAction()
+            {
+                Title = "★★",
+                Data = "You had rate ★★"
+            });
+            card.Actions.Add(new SubmitAction()
+            {
+                Title = "★",
+                Data = "You had rate ★"
+            });
+
+
+            Attachment attachment = new Attachment()
+            {
+                ContentType = AdaptiveCard.ContentType,
+                Content = card
+            };
+            replyToConversation.Attachments.Add(attachment);
+            
+
+          await context.PostAsync(replyToConversation);
+            context.Wait(MessageReceivedAsync);
+             context.Done(true);
         }
+
         public virtual async Task MessageReceivedAsync(IDialogContext context, IAwaitable<IMessageActivity> result)
         {
             var message = await result;
 
-
-            //this.ShowOptions(context);
-
-        }
-        private void ShowOptions(IDialogContext context)
-        {
-            PromptDialog.Choice(context, this.OnOptionRating, new List<string>() { fiverate, fourrate }, "rating", "Not a valid option", 3);
-        }
-
-        private async Task OnOptionRating(IDialogContext context, IAwaitable<string> result)
-        {
-
-            try
+            if (message.Value.Equals("You had rate ★★★★★"))
             {
-                var optionSelected = await result;
-                var message = context.MakeMessage();
-                 await context.PostAsync($"OptionSelected {message}.");
-
-                switch (optionSelected)
-                {
-                    case fiverate:
-                        await context.PostAsync("Five Star");
-                        context.Done(true);
-                        break;
-                    case fourrate:
-                        await context.PostAsync("Four Star");
-                        context.Done(true);
-                        break;
-                    case threerate:
-                       await context.PostAsync("Three Star");
-                       // context.Done(true);
-                        break;
-                    case tworate:
-                        await context.PostAsync("Two Star");
-                       // context.Done(true);
-                        break;
-                    case Onerate:
-                        await context.PostAsync("One Star");
-                        //context.Done(true);
-                        break;
-
-                }
+                //reroute the user back to your card with an additional message to 
+                //put response in the provided fields.
+                //return;
+                await context.PostAsync("Thanks ");
             }
 
-            catch (TooManyAttemptsException ex)
-            {
-                await context.PostAsync($"Ooops! Too many attemps :(. But don't worry, I'm handling that exception and you can try again!");
-
-               context.Wait(this.MessageReceivedAsync);
-            }
-            finally
-            {
-                context.Wait(this.MessageReceivedAsync);
-            }
+        
+            
         }
 
-
-        private async Task AfterSelectOption(IDialogContext context, IAwaitable<string> result)
-
-        {
-
-            if ((await result).ToString() == "★★★★★")
-            {
-                string value = "1";
-                await context.PostAsync(value);
-                //context.Done(String.Empty); //Finish this dialog
-            }
-            else
-            {
-                await context.PostAsync("I'm still on the survey until you tell me to stop");
-               // PromptDialog.Choice(context, this.AfterSelectOption, new string[] { "Stay in this survey", "Get back to where I was" }, "Hello, you're in the survey dialog. Please pick one of these options");
-
-            }
-
-        }
 
 
 

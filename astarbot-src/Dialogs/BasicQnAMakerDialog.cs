@@ -31,14 +31,6 @@ namespace Microsoft.Bot.Sample.QnABot
         private const string ExternalConsultant = "Seek for External Advice";
         private const string Quit = "Quit";
 
-        //Rating
-        private const string fiverate = "★★★★★";
-             private const string fourrate = "★★★★";
-             private const string threerate = "★★★";
-             private const string tworate = "★★";
-             private const string Onerate = "★";
-        
-
         //async
         public async Task StartAsync(IDialogContext context)
         {
@@ -97,6 +89,7 @@ namespace Microsoft.Bot.Sample.QnABot
            // context.Wait(MessageReceivedAsync);
      
             this.ShowOptions(context);
+           // await context.Forward(new AnswerDialog());
 
 
         }
@@ -130,7 +123,7 @@ namespace Microsoft.Bot.Sample.QnABot
                          //this.ShowRating(context);
                        // await this.ShowRating(context);
                         context.Call(new RatingDialog(), this.ResumeAfterOptionDialog);
-                 
+                       // context.Done(true);
                         break;
                         
                 }
@@ -145,69 +138,16 @@ namespace Microsoft.Bot.Sample.QnABot
         }
         private async Task ResumeAfterOptionDialog(IDialogContext context, IAwaitable<object> result)
         {
+           
+
             try
             {
                 var message = await result;
             }
             catch (Exception ex)
             {
-                await context.PostAsync($"Failed with message: {ex.Message}");
-            }
-          //  finally
-           // {
-           //     context.Wait(this.MessageReceivedAsync);
-           // }
-        }
-
-        public async Task ShowRating(IDialogContext context)
-     
-        {
-      
-            PromptDialog.Choice(context,this.OnOptionRating, new List<string>() { fiverate,fourrate,threerate,tworate,Onerate }," "," ",1);          
-        }
-
-        private async Task OnOptionRating(IDialogContext context, IAwaitable<string> result)
-        {
-
-            try
-            {
-                var optionSelected = await result;
-               // var message = context.MakeMessage();
-               // await context.PostAsync(message);
-               // context.Wait(this.MessageReceivedAsync);
-               // await context.PostAsync("You had choose {optionSelected}");
-
-                switch (optionSelected)
-                {
-                    case fiverate:
-                        await context.PostAsync("Five Star");
-                        context.Done(true);
-                        break;
-                    case fourrate:
-                        await context.PostAsync("Four Star");
-                        context.Done(true);
-                        break;
-                    case threerate:
-                        await context.PostAsync("Three Star");
-                        context.Done(true);
-                        break;
-                    case tworate:
-                        await context.PostAsync("Two Star");
-                        context.Done(true);
-                        break;
-                    case Onerate:
-                        await context.PostAsync("One Star");
-                        context.Done(true);
-                        break;
-
-                }
-            }
-
-            catch (TooManyAttemptsException ex)
-            {
-                await context.PostAsync($"Ooops! Too many attemps :(. But don't worry, I'm handling that exception and you can try again!");
-
-                context.Wait(this.MessageReceivedAsync);
+                context.Done(true);
+                //await context.PostAsync($"Failed with message: {ex.Message}");
             }
             finally
             {
@@ -215,6 +155,7 @@ namespace Microsoft.Bot.Sample.QnABot
             }
         }
 
+      
           
        
 
@@ -241,10 +182,8 @@ namespace Microsoft.Bot.Sample.QnABot
                         await context.PostAsync("Thanks for contacting our support team");
                         break;
                     case Quit:
-                        await context.PostAsync("Thank for Dropping by.");
-                        // this.ShowRating(context);
-                        // context.Wait(this.ShowRating);
-                        await this.ShowRating(context);
+                        context.Call(new RatingDialog(), this.ResumeAfterOptionDialog);
+                       // context.Done(true);
                         break;
 
                 }
@@ -337,47 +276,47 @@ namespace Microsoft.Bot.Sample.QnABot
             }
             //else
             //{
-            //    AdaptiveCard adaptiveCard = new AdaptiveCard();
+            //     AdaptiveCard adaptiveCard = new AdaptiveCard();
 
-            //    //Set the fallback text in case someone sends a request from a client that doesn't yet support Adaptive Cards fully
-            //    //card.FallbackText = answer;
+            //     //Set the fallback text in case someone sends a request from a client that doesn't yet support Adaptive Cards fully
+            //     adaptiveCard.FallbackText = firstanswer;
 
-            //    // Add text to the card.
-            //    //card.Body.Add(new TextBlock()
-            //    //{
-            //    //    Text = answer,
-            //    //    Wrap = true,
+            //     // Add text to the card.
+            //     adaptiveCard.Body.Add(new TextBlock()
+            //     {
+            //        Text = firstanswer,
+            //        Wrap = true,
 
-            //    //});
-
-            //    // Add text to the card.
-            //    adaptiveCard.Body.Add(new TextBlock()
-            //    {
-            //        Text = "Was this answer helpful?",
-            //        Size = TextSize.Small
             //    });
 
-            //    // Add buttons to the card.
-            //    adaptiveCard.Actions.Add(new SubmitAction()
-            //    {
-            //        Title = "Yes",
-            //        Data = "Yes, this was helpful"
-            //    });
+            //     // Add text to the card.
+            //     adaptiveCard.Body.Add(new TextBlock()
+            //     {
+            //         Text = "Was this answer helpful?",
+            //         Size = TextSize.Small
+            //     });
 
-            //    adaptiveCard.Actions.Add(new SubmitAction()
-            //    {
-            //        Title = "No",
-            //        Data = "No, this was not helpful"
-            //    });
+            //     // Add buttons to the card.
+            //     adaptiveCard.Actions.Add(new SubmitAction()
+            //     {
+            //         Title = "Yes",
+            //         Data = "Yes, this was helpful"
+            //     });
 
-            //    // Create the attachment.
-            //    Attachment attachment = new Attachment()
-            //    {
-            //        ContentType = AdaptiveCard.ContentType,
-            //        Content = adaptiveCard
-            //    };
+            //     adaptiveCard.Actions.Add(new SubmitAction()
+            //     {
+            //         Title = "No",
+            //         Data = "No, this was not helpful"
+            //     });
 
-            //    answer.Attachments.Add(attachment);
+            //     // Create the attachment.
+            //     Attachment attachment = new Attachment()
+            //     {
+            //         ContentType = AdaptiveCard.ContentType,
+            //         Content = adaptiveCard
+            //     };
+
+            //     answer.Attachments.Add(attachment);
             //}
 
 
@@ -393,16 +332,17 @@ namespace Microsoft.Bot.Sample.QnABot
 
             };
 
-            //    card.Buttons = new List<CardAction>
-            //{
-            //    new CardAction(ActionTypes.OpenUrl,"Learn More", value:url)
-            //};
+            ////    card.Buttons = new List<CardAction>
+            ////{
+            ////    new CardAction(ActionTypes.OpenUrl,"Learn More", value:url)
+            ////};
 
-            //    card.Images = new List<CardImage>
-            //{
-            //    new CardImage(url = imageUrl)
-            //};
+            ////    card.Images = new List<CardImage>
+            ////{
+            ////    new CardImage(url = imageUrl)
+            ////};
 
+            answer.AttachmentLayout = AttachmentLayoutTypes.Carousel;
             answer.Attachments.Add(card.ToAttachment());
 
             await context.PostAsync(answer);
