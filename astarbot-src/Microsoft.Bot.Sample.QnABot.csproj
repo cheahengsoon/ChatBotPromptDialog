@@ -187,7 +187,8 @@
     <Compile Include="Components\QNAComponent.cs" />
     <Compile Include="Dialogs\BasicQnAMakerDialog.cs" />
     <Compile Include="Controllers\MessagesController.cs" />
-    <Compile Include="Dialogs\RatingDialog.cs" />
+    <Compile Include="Dialogs\FeebackDialog.cs" />
+    <Compile Include="Dialogs\RatingDialogtwo.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>

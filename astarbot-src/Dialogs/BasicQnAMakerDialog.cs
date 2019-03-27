@@ -18,6 +18,8 @@ using AdaptiveCards;
 using System.Collections;
 using QnABot.Dialogs;
 
+
+
 namespace Microsoft.Bot.Sample.QnABot
 {
     [Serializable]
@@ -25,21 +27,12 @@ namespace Microsoft.Bot.Sample.QnABot
     public class RootDialog : IDialog<object>
     {
 
-        private const string relevantAnswer = "Answer is Relevant";
-        private const string NotrelevantAnswer = "No Relevant Answer";
-        private const string RephraseQuestion = "Rephrase My Question";
-        private const string ExternalConsultant = "Seek for External Advice";
-        private const string Quit = "Quit";
-
-        //async
         public async Task StartAsync(IDialogContext context)
         {
             /* Wait until the first message is received from the conversation and call MessageReceviedAsync 
             *  to process that message. */
 
             context.Wait(this.MessageReceivedAsync);
-
-           
 
         }
 
@@ -52,7 +45,6 @@ namespace Microsoft.Bot.Sample.QnABot
           // await context.PostAsync("Let me flip through my accounting books and see if I can find anything…");
        
             var message = await result;
-            
 
             //var qnaAuthKey = GetSetting("QnAAuthKey"); 
             //var qnaKBId = Utils.GetAppSetting("QnAKnowledgebaseId");
@@ -81,121 +73,59 @@ namespace Microsoft.Bot.Sample.QnABot
 
         }
 
- 
 
         private async Task AfterAnswerAsync(IDialogContext context, IAwaitable<IMessageActivity> result)
         {
            
-           // context.Wait(MessageReceivedAsync);
+         //  context.Wait(MessageReceivedAsync);
      
-            this.ShowOptions(context);
-           // await context.Forward(new AnswerDialog());
+           Activity reply=((Activity)context.Activity).CreateReply();
+            HeroCard card = new HeroCard();
+            card.Buttons = new List<CardAction>
+            {
+                new CardAction(ActionTypes.ImBack, "Answer is Relevant", value: "Answer is Relevant"),
+                                new CardAction(ActionTypes.ImBack, "No Relevant Answer", value: "No Relevant Answer")
+            };
+            reply.Attachments.Add(card.ToAttachment());
+            await context.PostAsync(reply);
+
+            context.Wait(OnOptionSelected2);
 
 
         }
 
-
-        private void ShowOptions(IDialogContext context)
+        // Route the user to appropriate action depending on their choice
+        private async Task OnOptionSelected2(IDialogContext context, IAwaitable<IMessageActivity> result)
         {
+            var message = await result;
+            var choice = message.Text;
 
-              PromptDialog.Choice(context, this.OnOptionSelected, new List<string>() { relevantAnswer, NotrelevantAnswer }, " ", "Not a valid option", 3);
-       
+            if (choice == "Answer is Relevant" )
+            {
+                await context.PostAsync("Your feedback has been recorded.");
+                await context.PostAsync("Yay! Bot Dance!!");
+                await context.PostAsync("└[∵┌] └[ ∵ ]┘ [┐∵]┘");
 
+                context.Call(new FeebackDialog(), OnFeedbackSubmitted);
+            }
+            else if (choice == "No Relevant Answer")
+            {
+                await context.PostAsync("Please Rate this Auditbot.");
+                context.Call(new RatingDialogtwo(), OnFeedbackSubmitted);
+            }
+            else
+            {
+                // Assume it's another question so forward on to QnA dialog
+                await context.Forward(child: new BasicQnAMakerDialog(), resume: AfterAnswerAsync, item: message, token: CancellationToken.None);
+            }
         }
 
-
-        private async Task OnOptionSelected(IDialogContext context, IAwaitable<string> result)
+        private async Task OnFeedbackSubmitted(IDialogContext context, IAwaitable<object> result)
         {
-            try
-            {
-                string optionSelected = await result;
-
-                switch (optionSelected)
-                {
-                    case relevantAnswer:
-                      //  context.Call(new RatingDialog(), this.ResumeAfterOptionDialog);
-                       
-                        await context.PostAsync("Your Feedback Been Recorded.");
-                        this.ShowOptions3(context);
-                        break;
-                    case NotrelevantAnswer:
-
-                         //this.ShowRating(context);
-                       // await this.ShowRating(context);
-                        context.Call(new RatingDialog(), this.ResumeAfterOptionDialog);
-                       // context.Done(true);
-                        break;
-                        
-                }
-            }
-
-            catch (TooManyAttemptsException ex)
-            {
-                await context.PostAsync($"Ooops! Too many attemps :(. But don't worry, I'm handling that exception and you can try again!");
-
-                context.Wait(this.MessageReceivedAsync);
-            }
-        }
-        private async Task ResumeAfterOptionDialog(IDialogContext context, IAwaitable<object> result)
-        {
-           
-
-            try
-            {
-                var message = await result;
-            }
-            catch (Exception ex)
-            {
-                context.Done(true);
-                //await context.PostAsync($"Failed with message: {ex.Message}");
-            }
-            finally
-            {
-                context.Wait(this.MessageReceivedAsync);
-            }
+        
+            context.EndConversation("");
         }
 
-      
-          
-       
-
-
-
-        private void ShowOptions3(IDialogContext context)
-        {
-
-            PromptDialog.Choice(context, this.OnOptionSelected3, new List<string>() { RephraseQuestion, ExternalConsultant, Quit }, " ", "Not a valid option", 3);
-
-        }
-        private async Task OnOptionSelected3(IDialogContext context, IAwaitable<string> result)
-        {
-            try
-            {
-                string optionSelected = await result;
-
-                switch (optionSelected)
-                {
-                    case RephraseQuestion:
-                        context.Wait(this.MessageReceivedAsync);
-                        break;
-                    case ExternalConsultant:
-                        await context.PostAsync("Thanks for contacting our support team");
-                        break;
-                    case Quit:
-                        context.Call(new RatingDialog(), this.ResumeAfterOptionDialog);
-                       // context.Done(true);
-                        break;
-
-                }
-            }
-
-            catch (TooManyAttemptsException ex)
-            {
-                await context.PostAsync($"Ooops! Too many attemps :(. But don't worry, I'm handling that exception and you can try again!");
-
-                context.Wait(this.MessageReceivedAsync);
-            }
-        }
 
         public static string GetSetting(string key)
         {
@@ -219,7 +149,7 @@ namespace Microsoft.Bot.Sample.QnABot
         // Parameters to QnAMakerService are:
         // Required: subscriptionKey, knowledgebaseId, 
         // Optional: defaultMessage, scoreThreshold[Range 0.0 – 1.0]
-        public BasicQnAMakerPreviewDialog() : base(new QnAMakerService(new QnAMakerAttribute(qnaAuthKey, qnaKBId, "I do not know answer to your question how else can i help you?\n\nPlease ask me questions again.", 0.5, 3, endpointHostName: endpointHostName)))
+        public BasicQnAMakerPreviewDialog() : base(new QnAMakerService(new QnAMakerAttribute(qnaAuthKey, qnaKBId, "I don't understand this right now! Try another quetion!", 0.5, 3, endpointHostName: endpointHostName)))
         { }
 
 
@@ -242,8 +172,7 @@ namespace Microsoft.Bot.Sample.QnABot
              (
                  qnaAuthKey,
                  qnaKBId,
-                 "I do not know answer to your question how else can i help you?\n\n" +
-                 "Please ask me questions again.",
+                 "I don't understand this right now! Try another question!",
                  0.5,
                  3,
                  endpointHostName
@@ -251,22 +180,22 @@ namespace Microsoft.Bot.Sample.QnABot
         {
 
         }
-
+ 
         protected override async Task RespondFromQnAMakerResultAsync(IDialogContext context, IMessageActivity message, QnAMakerResults result)
         {
 
             // answer is a string
             var firstanswer = result.Answers.First().Answer;
 
-            //if(firstanswer== "I do not know answer to your question how else can i help you?\n\nPlease ask me questions again.")
-            //{
-
-            //}
-
             Activity answer = ((Activity)context.Activity).CreateReply();
+            answer.AttachmentLayout = AttachmentLayoutTypes.Carousel;
+          
 
+            answer.Text = firstanswer;
 
             var dataAnswer = firstanswer.Split(';');
+
+
 
             if (dataAnswer.Length == 1)
             {
@@ -274,79 +203,33 @@ namespace Microsoft.Bot.Sample.QnABot
                 await context.PostAsync(firstanswer);
                 return;
             }
-            //else
-            //{
-            //     AdaptiveCard adaptiveCard = new AdaptiveCard();
-
-            //     //Set the fallback text in case someone sends a request from a client that doesn't yet support Adaptive Cards fully
-            //     adaptiveCard.FallbackText = firstanswer;
-
-            //     // Add text to the card.
-            //     adaptiveCard.Body.Add(new TextBlock()
-            //     {
-            //        Text = firstanswer,
-            //        Wrap = true,
-
-            //    });
-
-            //     // Add text to the card.
-            //     adaptiveCard.Body.Add(new TextBlock()
-            //     {
-            //         Text = "Was this answer helpful?",
-            //         Size = TextSize.Small
-            //     });
-
-            //     // Add buttons to the card.
-            //     adaptiveCard.Actions.Add(new SubmitAction()
-            //     {
-            //         Title = "Yes",
-            //         Data = "Yes, this was helpful"
-            //     });
-
-            //     adaptiveCard.Actions.Add(new SubmitAction()
-            //     {
-            //         Title = "No",
-            //         Data = "No, this was not helpful"
-            //     });
-
-            //     // Create the attachment.
-            //     Attachment attachment = new Attachment()
-            //     {
-            //         ContentType = AdaptiveCard.ContentType,
-            //         Content = adaptiveCard
-            //     };
-
-            //     answer.Attachments.Add(attachment);
-            //}
 
 
-            var title = dataAnswer[0];
-            var description = dataAnswer[1];
-            var url = dataAnswer[2];
-            var imageUrl = dataAnswer[3];
-
-            HeroCard card = new HeroCard
+            else
+           
             {
 
-                Text = description
+                var title = dataAnswer[0];
+                var description = dataAnswer[1];
+                var url = dataAnswer[2];
+                var imageUrl = dataAnswer[3];
 
-            };
+                HeroCard card = new HeroCard
+                {
 
-            ////    card.Buttons = new List<CardAction>
-            ////{
-            ////    new CardAction(ActionTypes.OpenUrl,"Learn More", value:url)
-            ////};
+                    Text = description
 
-            ////    card.Images = new List<CardImage>
-            ////{
-            ////    new CardImage(url = imageUrl)
-            ////};
+                };
 
-            answer.AttachmentLayout = AttachmentLayoutTypes.Carousel;
-            answer.Attachments.Add(card.ToAttachment());
 
-            await context.PostAsync(answer);
+
+                answer.AttachmentLayout = AttachmentLayoutTypes.Carousel;
+                answer.Attachments.Add(card.ToAttachment());
+
+
+            }
         }
+
 
 
 

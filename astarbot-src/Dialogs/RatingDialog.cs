@@ -68,11 +68,11 @@ namespace QnABot.Dialogs
                 Content = card
             };
             replyToConversation.Attachments.Add(attachment);
-            
 
-          await context.PostAsync(replyToConversation);
-            context.Wait(MessageReceivedAsync);
-             context.Done(true);
+          
+            await context.PostAsync(replyToConversation);
+          
+            context.Done(true);
         }
 
         public virtual async Task MessageReceivedAsync(IDialogContext context, IAwaitable<IMessageActivity> result)
