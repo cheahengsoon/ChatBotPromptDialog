@@ -5,7 +5,7 @@
 2. Prompt Dialog
 
 # Issue
-1. Rating Dialog does not capture the Star Rating
+1. Rating Dialog does not capture the Star Rating (Done)
 
 # Next
 1. Carousel Dislay
